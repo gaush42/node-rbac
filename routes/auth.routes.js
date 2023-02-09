@@ -9,6 +9,6 @@ router.route('/login').post(LoginLimiter, AuthController.Login)
 router.route('/refresh').get(AuthController.refresh)
 //router.route('/logout').post(AuthController.logout)
 
-//router.route('/all').get(verifyJWT,AuthController.getAllUser)
+router.route('/all').get(verifyJWT,AuthController.getAllUser)
 
 module.exports = router

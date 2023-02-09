@@ -1,6 +1,7 @@
 const User = require('../models/user.model')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const asyncHandler = require('express-async-handler')
 require('dotenv').config()
 
 const RegisterNewUser = async(req, res) => {
@@ -48,23 +49,23 @@ const Login = async(req, res) => {
         const accessToken = jwt.sign(
             {'username': foundUser.username},
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: '1m'}
+            { expiresIn: '30s'}
         );
         const refreshToken = jwt.sign(
             {'username': foundUser.username},
             process.env.REFRESH_TOKEN_SECRET,
-            { expiresIn: '1d'}
+            { expiresIn: '7d'}
         );
 
         // Create secure cookie with refresh token 
         res.cookie('jwt', refreshToken, {
             httpOnly: true, //accessible only by web server 
-            secure: true, //https
+            //secure: true, //https
             sameSite: 'None', //cross-site cookie 
-            maxAge: 24 * 60 * 60 * 1000 //cookie expiry: set to match rT
+            maxAge: 7 * 24 * 60 * 60 * 1000 //cookie expiry: set to match rT
         })
 
-        res.status(200).json(accessToken)
+        res.status(200).json({accessToken})
         //res.status(200).json(foundUser)
     }catch(error){
         res.status(500).json(error)
@@ -72,29 +73,33 @@ const Login = async(req, res) => {
 }
 const refresh = (req, res)=>{
     const cookies = req.cookies
-    console.log(cookies)
-    if(!cookies?.jwt) return res.status(401)
-    console.log(cookies.jwt)
+    console.log({cookies})
+    if (!cookies?.jwt) return res.status(401).json({ message: 'Unauthorized' })
+
     const refreshToken = cookies.jwt
     console.log(refreshToken)
 
     jwt.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET,
-        async (err, decoded) => {
-            if(err) return res.status(403).json('Forbidden')
+        asyncHandler(async (err, decoded) => {
+            if (err) return res.status(403).json({ message: 'Forbidden' })
+            console.log('tedt')
 
-            const foundUser = await User.findOne({ username: decoded.username}).exec()
+            const foundUser = await User.findOne({ username: decoded.username }).exec()
 
-            if(!foundUser) return res.status(401).json('Unauthorized')
+            if (!foundUser) return res.status(401).json({ message: 'Unauthorized' })
 
             const accessToken = jwt.sign(
-                {'username': foundUser.username},
+                {
+                     "username": foundUser.username,
+                },
                 process.env.ACCESS_TOKEN_SECRET,
-                { expiresIn: '30s'}
+                { expiresIn: '30s' }
             )
-            res.json(accessToken)
-        }
+
+            res.json({ accessToken })
+        })
     )
 }
 /*const logout = (req, res) => {

@@ -2,16 +2,17 @@ const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
 const cookieParser = require('cookie-parser')
+const corsOptions = require('./config/corsOptions')
 
 
 const connectDB = require('./config/db.config')
 
 const app = express()
-
-app.use(cors())
+app.use(cookieParser())
+app.use(cors(corsOptions))
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
-app.use(cookieParser())
+
 const PORT = 8000
 
 connectDB()
