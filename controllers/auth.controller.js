@@ -6,7 +6,7 @@ require('dotenv').config()
 
 const RegisterNewUser = async(req, res) => {
     try{
-        const {username, email, password} = req.body
+        const {username, email, password, roles} = req.body
 
         if(!username || !email || !password){
             return res.status(400).json('All fields are Required')
@@ -20,7 +20,11 @@ const RegisterNewUser = async(req, res) => {
 
         const salt = bcrypt.genSaltSync(10)
         const hashedPassword = bcrypt.hashSync(password, salt)
-        const userObj = { username, email, password:hashedPassword }
+
+        const userObj = (!Array.isArray(roles) || !roles.length)
+        ? { username, email, password:hashedPassword }
+        : { username, email, password:hashedPassword, roles}
+
         const newUser = await User.create(userObj)
         if (newUser) { //created 
             res.status(201).json({ message: `New user ${username} created` })
@@ -47,9 +51,14 @@ const Login = async(req, res) => {
             return res.status(400).json('Wrong password')
         }
         const accessToken = jwt.sign(
-            {'username': foundUser.username},
+            { 
+                'userInfo': {
+                    "username": foundUser.username,
+                    "roles": foundUser.roles
+                }
+            },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: '30s'}
+            { expiresIn: '15m'}
         );
         const refreshToken = jwt.sign(
             {'username': foundUser.username},
@@ -91,11 +100,14 @@ const refresh = (req, res)=>{
             if (!foundUser) return res.status(401).json({ message: 'Unauthorized' })
 
             const accessToken = jwt.sign(
-                {
-                     "username": foundUser.username,
+                { 
+                    'userInfo': {
+                        "username": foundUser.username,
+                        "roles": foundUser.roles
+                    }
                 },
                 process.env.ACCESS_TOKEN_SECRET,
-                { expiresIn: '30s' }
+                { expiresIn: '15m' }
             )
 
             res.json({ accessToken })
