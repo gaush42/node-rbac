@@ -114,29 +114,17 @@ const refresh = (req, res)=>{
         })
     )
 }
-/*const logout = (req, res) => {
+const logout = (req, res) => {
     const cookies = req.cookies
     if (!cookies?.jwt) return res.sendStatus(204) //No content
     res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true })
     res.json({ message: 'Cookie cleared' })
-}*/
-
-const getAllUser = async(req, res)=>{
-    const users = await User.find().select('-password').lean()
-
-    // If no users 
-    if (!users?.length) {
-        return res.status(400).json({ message: 'No users found' })
-    }
-    res.status(200).json(users)
 }
-
 
 
 module.exports = {
     RegisterNewUser,
     Login,
     refresh,
-    //logout,
-    getAllUser
+    logout
 }
